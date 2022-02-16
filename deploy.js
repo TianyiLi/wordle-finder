@@ -1,2 +1,2 @@
-const g = require('gh-pages')
+import g from 'gh-pages';
 g.publish('dist', d => console.log(d));
