@@ -4,13 +4,27 @@
   let excludeStr = ''
   let mask = ''
 
-  $: result = (() => {
-    let maskCond = /^([a-zA-Z\_]+)$/.test(mask)
+  function openWordle() {
+    window.open(
+      'https://www.nytimes.com/games/wordle/index.html',
+      '_blank',
+      'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=600'
+    )
+  }
 
-    const cond = [!!includeStr, !!excludeStr, maskCond && mask.length === 5]
-    const _includeStr = includeStr.split('')
-    const _excludeStr = new RegExp(excludeStr.split('').join('|'))
-    const _maskStr = new RegExp(mask.replace(/\_/g, '.'))
+  $: result = (() => {
+    let maskCond = /^([a-zA-Z\_\!]+)$/.test(mask)
+
+    const cond = [!!includeStr, !!excludeStr, maskCond && mask.length >= 5]
+    const _includeStr = includeStr.toLowerCase().split('')
+    const _excludeStr = new RegExp(excludeStr.toLowerCase().split('').join('|'))
+    const _maskStr = new RegExp(
+      mask
+        .toLowerCase()
+        .replace(/\_/g, '.')
+        .replace(/\!(\w)/g, '[^$1]')
+    )
+    console.log(_maskStr)
     if (!cond.some((b) => b)) {
       return ''
     }
@@ -52,9 +66,14 @@
       <input id="exclude" type="text" bind:value={excludeStr} />
     </div>
     <div class="section">
-      <label for="mask">Mask (empty by _)</label>
+      <label for="mask">Mask (empty by _, exclude with ! prefix)</label>
       <input id="mask" type="text" bind:value={mask} />
     </div>
+    <div class="section">
+      <label for="frame"> open worldle </label>
+      <button id="frame" on:click={openWordle}>open</button>
+    </div>
+
     <div class="result-section">
       {result}
     </div>
@@ -75,6 +94,10 @@
   }
   .section {
     margin: 10px;
+    font-size: 20px;
+  }
+  input {
+    font-size: 20px;
   }
   .result-section {
     margin: 10px;
