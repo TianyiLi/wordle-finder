@@ -2,7 +2,7 @@
   import { key } from './constant'
   let includeStr = ''
   let excludeStr = ''
-  let mask = ''
+  let masks = [{ id: 0, mask: '' }]
 
   function openWordle() {
     window.open(
@@ -13,18 +13,22 @@
   }
 
   $: result = (() => {
-    let maskCond = /^([a-zA-Z\_\!]+)$/.test(mask)
+    let maskCond = masks.filter(
+      (m) => /^([a-zA-Z\_\!]+)$/.test(m.mask) && m.mask.length >= 5
+    )
 
-    const cond = [!!includeStr, !!excludeStr, maskCond && mask.length >= 5]
+    const cond = [!!includeStr, !!excludeStr, maskCond.length]
     const _includeStr = includeStr.toLowerCase().split('')
     const _excludeStr = new RegExp(excludeStr.toLowerCase().split('').join('|'))
-    const _maskStr = new RegExp(
-      mask
-        .toLowerCase()
-        .replace(/\_/g, '.')
-        .replace(/\!(\w)/g, '[^$1]')
-    )
-    console.log(_maskStr)
+    const _maskTest = maskCond.map((m) => {
+      return new RegExp(
+        m.mask
+          .toLowerCase()
+          .replace(/\_/g, '.')
+          .replace(/\!(\w)/g, '[^$1]')
+      )
+    })
+
     if (!cond.some((b) => b)) {
       return ''
     }
@@ -42,8 +46,8 @@
           }
         }
         if (cond[2]) {
-          if (!_maskStr.test(l)) {
-            _maskStr.lastIndex = 0
+          if (!_maskTest.every((m) => m.test(l))) {
+            _maskTest.forEach((m) => (m.lastIndex = 0))
             return false
           }
         }
@@ -66,8 +70,25 @@
       <input id="exclude" type="text" bind:value={excludeStr} />
     </div>
     <div class="section">
-      <label for="mask">Mask (empty by _, exclude with ! prefix)</label>
-      <input id="mask" type="text" bind:value={mask} />
+      <label for="mask"
+        >Mask (empty by _, exclude with ! prefix) <button
+          on:click={() => {
+            masks = [...masks, { id: masks.length, mask: '' }]
+          }}>add candidate option</button
+        ></label
+      >
+      <br />
+      {#each masks as mask, index}
+        <input
+          type="text"
+          style="margin-bottom: 10px"
+          bind:value={mask.mask}
+          on:input={(e) => {
+            masks[index].mask = e.target.value
+          }}
+        />
+        <br/>
+      {/each}
     </div>
     <div class="section">
       <label for="frame"> open worldle </label>
